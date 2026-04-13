@@ -176,9 +176,12 @@ public class MainOrderMenu extends FastInv {
                         ItemMeta meta = item.getItemMeta();
                         if (meta == null) continue;
 
+                        boolean hasPapi = player != null &&
+                                main.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null;
+
                         String name = meta.getDisplayName();
                         if (name != null && !name.isEmpty()) {
-                            String processedName = PlaceholderAPI.setPlaceholders(player, name);
+                            String processedName = hasPapi ? PlaceholderAPI.setPlaceholders(player, name) : name;
                             meta.setDisplayName(processedName);
                             item.setItemMeta(meta);
                         }
@@ -186,7 +189,7 @@ public class MainOrderMenu extends FastInv {
                         List<String> lore = meta.getLore();
                         if (lore != null) {
                             List<String> processedLore = lore.stream()
-                                    .map(line -> PlaceholderAPI.setPlaceholders(player, line))
+                                    .map(line -> hasPapi ? PlaceholderAPI.setPlaceholders(player, line) : line)
                                     .collect(Collectors.toList());
 
                             meta.setLore(processedLore);
