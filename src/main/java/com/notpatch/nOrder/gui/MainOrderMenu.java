@@ -5,6 +5,7 @@ import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.model.Order;
+import com.notpatch.nOrder.model.OrderSortType;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
@@ -25,10 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MainOrderMenu extends FastInv {
@@ -42,24 +40,29 @@ public class MainOrderMenu extends FastInv {
     private final int itemsPerPage;
     private List<Order> filteredOrders;
     private Player player;
+    private final OrderSortType sortType;
 
     public MainOrderMenu() {
-        this(1, NOrder.getInstance().getOrderManager().getHighlightedOrdersFirst());
+        this(1, NOrder.getInstance().getOrderManager().getAllOrders(), null, null, null, OrderSortType.HIGHLIGHTED);
     }
 
     public MainOrderMenu(Player player) {
-        this(1, NOrder.getInstance().getOrderManager().getHighlightedOrdersFirst(), null, null, player);
+        this(1, NOrder.getInstance().getOrderManager().getAllOrders(), null, null, player, OrderSortType.HIGHLIGHTED);
     }
 
     public MainOrderMenu(List<Order> orders) {
-        this(1, orders);
+        this(1, orders, null, null, null, OrderSortType.HIGHLIGHTED);
     }
 
     public MainOrderMenu(int page, List<Order> orders) {
-        this(page, orders, null, null, null);
+        this(page, orders, null, null, null, OrderSortType.HIGHLIGHTED);
     }
 
     public MainOrderMenu(int page, List<Order> orders, String filterType, String filterValue, Player player) {
+        this(page, orders, filterType, filterValue, player, OrderSortType.HIGHLIGHTED);
+    }
+
+    public MainOrderMenu(int page, List<Order> orders, String filterType, String filterValue, Player player, OrderSortType sortType) {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("main-order-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("main-order-menu.title")));
 
@@ -67,13 +70,16 @@ public class MainOrderMenu extends FastInv {
         Configuration configuration = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         this.currentPage = page;
+        this.sortType = sortType;
         this.itemsPerPage = configuration.getInt("main-order-menu.pagination.items-per-page", 21);
 
         if (filterType != null && filterValue != null) {
             this.filteredOrders = filterOrders(orders, filterType, filterValue);
         } else {
-            this.filteredOrders = orders;
+            this.filteredOrders = new ArrayList<>(orders);
         }
+
+        this.filteredOrders = sortOrders(this.filteredOrders);
 
         List<String> slotsStrList = configuration.getStringList("main-order-menu.order-slots");
         if (slotsStrList.isEmpty()) {
@@ -90,6 +96,7 @@ public class MainOrderMenu extends FastInv {
         }
 
         loadMenuItems(configuration);
+        loadSortButton(configuration);
         loadOrderItems(this.filteredOrders);
     }
 
@@ -107,6 +114,52 @@ public class MainOrderMenu extends FastInv {
         };
     }
 
+    private List<Order> sortOrders(List<Order> orders) {
+        return switch (sortType) {
+            case NAME -> orders.stream()
+                    .sorted(Comparator.comparing(o -> o.getMaterial().name()))
+                    .collect(Collectors.toList());
+            case PRICE_ASC -> orders.stream()
+                    .sorted(Comparator.comparingDouble(o -> o.getPrice() * o.getAmount()))
+                    .collect(Collectors.toList());
+            case PRICE_DESC -> orders.stream()
+                    .sorted(Comparator.comparingDouble((Order o) -> o.getPrice() * o.getAmount()).reversed())
+                    .collect(Collectors.toList());
+            case DATE -> orders.stream()
+                    .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
+                    .collect(Collectors.toList());
+            case HIGHLIGHTED -> orders.stream()
+                    .sorted(Comparator.comparing(Order::isHighlight).reversed())
+                    .collect(Collectors.toList());
+        };
+    }
+
+    private void loadSortButton(Configuration configuration) {
+        ConfigurationSection sortSection = configuration.getConfigurationSection("main-order-menu.items.sort");
+        if (sortSection == null) return;
+
+        int slot = sortSection.getInt("slot");
+        Material material;
+        try {
+            material = Material.valueOf(sortSection.getString("material", "HOPPER"));
+        } catch (IllegalArgumentException e) {
+            material = Material.HOPPER;
+        }
+
+        String sortName = LanguageLoader.getMessage("sort-type-" + sortType.name().toLowerCase().replace("_", "-"));
+        String itemName = ColorUtil.hexColor(sortSection.getString("name", "&f&lSort").replace("%sort_type%", sortName));
+        List<String> lore = sortSection.getStringList("lore").stream()
+                .map(line -> ColorUtil.hexColor(line.replace("%sort_type%", sortName)))
+                .collect(Collectors.toList());
+
+        ItemStack sortItem = ItemStackHelper.builder()
+                .material(material)
+                .displayName(itemName)
+                .lore(lore)
+                .build();
+
+        setItem(slot, sortItem, e -> handleMenuAction("sort-orders", e.getWhoClicked()));
+    }
 
     private void loadMenuItems(Configuration configuration) {
         ConfigurationSection itemsSection = configuration.getConfigurationSection("main-order-menu.items");
@@ -357,8 +410,8 @@ public class MainOrderMenu extends FastInv {
                 player.sendMessage(LanguageLoader.getMessage("enter-item"));
                 main.getChatInputManager().setAwaitingInput((Player) player, searchValue -> {
                     main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
-                        new MainOrderMenu(1, main.getOrderManager().getHighlightedOrdersFirst(),
-                                "item", searchValue, (Player) player).open((Player) player);
+                        new MainOrderMenu(1, main.getOrderManager().getAllOrders(),
+                                "item", searchValue, (Player) player, sortType).open((Player) player);
                     });
                 });
             }
@@ -372,7 +425,7 @@ public class MainOrderMenu extends FastInv {
                 if (currentPage < Math.ceil((double) filteredOrders.size() / itemsPerPage)) {
                     player.closeInventory();
                     main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
-                        new MainOrderMenu(currentPage + 1, filteredOrders).open((Player) player);
+                        new MainOrderMenu(currentPage + 1, filteredOrders, null, null, (Player) player, sortType).open((Player) player);
                     });
                 }
             }
@@ -380,9 +433,17 @@ public class MainOrderMenu extends FastInv {
                 if (currentPage > 1) {
                     player.closeInventory();
                     main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
-                        new MainOrderMenu(currentPage - 1, filteredOrders).open((Player) player);
+                        new MainOrderMenu(currentPage - 1, filteredOrders, null, null, (Player) player, sortType).open((Player) player);
                     });
                 }
+            }
+            case "sort-orders" -> {
+                player.closeInventory();
+                OrderSortType nextSort = sortType.next();
+                List<Order> baseOrders = main.getOrderManager().getAllOrders();
+                main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
+                    new MainOrderMenu(1, baseOrders, null, null, (Player) player, nextSort).open((Player) player);
+                });
             }
         }
     }
