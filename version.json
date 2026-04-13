@@ -1,5 +1,5 @@
 {
-  "version": "1.3.6",
-  "message": "\n- Added custom head support for menu\n- ",
-  "critical": true
+  "version": "1.3.7",
+  "message": "\n- Fixed player name appearing empty in order broadcast\n- Added delivery notification to order owner\n- Added sorting support (Highlighted, Name, Price Asc/Desc, Date)",
+  "critical": false
 }
