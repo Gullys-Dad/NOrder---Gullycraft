@@ -25,6 +25,15 @@ main-order-menu:
         - "&7Click to search existing orders."
         - ""
       action: search-order
+    sort:
+      slot: 47
+      material: HOPPER
+      name: "&f&lSort: &e%sort_type%"
+      lore:
+        - ""
+        - "&7Click to change sort order."
+        - ""
+      action: sort-orders
     your-orders:
       slot: 50
       material: CHEST
