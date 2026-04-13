@@ -106,6 +106,7 @@ blacklist-items:
 |------------|-------------|---------|
 | `norder.use` | Allows using the order system | op |
 | `norder.menu` | Allows opening the order menu | op |
+| `norder.cancel` | Allows cancel your own order | op |
 | `norder.admin` | Allows using admin commands | op |
 | `norder.highlight` | Allows highlighting orders | `norder.highlight` |
 | `norder.limit.<number>` | Sets max active orders (e.g., `norder.limit.10`) | 5 |
