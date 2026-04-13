@@ -5,6 +5,7 @@ import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
+import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
@@ -207,11 +208,18 @@ public class OrderDetailsMenu extends FastInv {
 
                     NSound.success(player);
 
+                    Player orderOwner = Bukkit.getPlayer(order.getPlayerId());
+                    if (orderOwner != null && orderOwner.isOnline()) {
+                        orderOwner.sendMessage(LanguageLoader.getMessage("order-progress")
+                                .replace("%player%", player.getName())
+                                .replace("%amount%", String.valueOf(totalAmount))
+                                .replace("%material%", StringUtil.formatMaterialName(order.getMaterial())));
+                    }
+
                     if (order.getRemaining() <= 0) {
                         order.setStatus(OrderStatus.COMPLETED);
                         main.getOrderLogger().logOrderCompleted(order);
 
-                        Player orderOwner = Bukkit.getPlayer(order.getPlayerId());
                         if (orderOwner != null && orderOwner.isOnline()) {
                             orderOwner.sendMessage(LanguageLoader.getMessage("delivery-completed").replace("%material%", order.getMaterial().name()));
                         }
