@@ -72,8 +72,13 @@ public class LanguageLoader {
 
     public String get(String path) {
         String value = translationMap.getOrDefault(path, "Translation not found for path: " + path);
-        if (main.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
-            value = PlaceholderAPI.setPlaceholders(null, value);
+        return ColorUtil.hexColor(value);
+    }
+
+    public String get(String path, org.bukkit.entity.Player player) {
+        String value = translationMap.getOrDefault(path, "Translation not found for path: " + path);
+        if (player != null && main.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null)
+            value = PlaceholderAPI.setPlaceholders(player, value);
         return ColorUtil.hexColor(value);
     }
 
@@ -103,6 +108,10 @@ public class LanguageLoader {
 
     public static String getMessage(String path) {
         return NOrder.getInstance().getLanguageLoader().get(path);
+    }
+
+    public static String getMessage(String path, org.bukkit.entity.Player player) {
+        return NOrder.getInstance().getLanguageLoader().get(path, player);
     }
 
     public static List<String> getMessageList(String path) {
