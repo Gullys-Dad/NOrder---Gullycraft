@@ -5,7 +5,8 @@ public enum OrderSortType {
     NAME,
     PRICE_ASC,
     PRICE_DESC,
-    DATE;
+    DATE,
+    CUSTOM_ITEM;
 
     public OrderSortType next() {
         OrderSortType[] values = values();
