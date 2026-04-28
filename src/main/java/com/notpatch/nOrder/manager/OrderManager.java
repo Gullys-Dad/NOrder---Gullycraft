@@ -381,6 +381,14 @@ public class OrderManager {
                 return;
             }
 
+            if (order.getCollected() < order.getDelivered()) {
+                player.sendMessage(LanguageLoader.getMessage("order-not-collected")
+                        .replace("%delivered%", String.valueOf(order.getDelivered()))
+                        .replace("%collected%", String.valueOf(order.getCollected())));
+                NSound.error(player);
+                return;
+            }
+
             double refundAmount = (order.getAmount() - order.getDelivered()) * order.getPrice();
             main.getEconomy().depositPlayer(offlinePlayer, refundAmount);
             main.getOrderLogger().logOrderCancelled(order, refundAmount);
