@@ -131,6 +131,9 @@ public class MainOrderMenu extends FastInv {
             case HIGHLIGHTED -> orders.stream()
                     .sorted(Comparator.comparing(Order::isHighlight).reversed())
                     .collect(Collectors.toList());
+            case CUSTOM_ITEM -> orders.stream()
+                    .filter(Order::isCustomItem)
+                    .collect(Collectors.toList());
         };
     }
 
