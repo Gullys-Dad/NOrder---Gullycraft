@@ -35,7 +35,7 @@ delivery-wrong-item: "&cBu sipariş için sadece &f%material% &cteslim edebilirs
 delivery-excess-items: "&7Fazla &c%amount% &7eşya geri verildi."
 order-not-active: "&cBu sipariş artık aktif değil!"
 order-processing: "&cBu sipariş şu anda işleniyor! Lütfen birazdan tekrar deneyin."
-
+order-not-collected: "&cTeslim edilen ürünleri toplamadan siparişi iptal edemezsiniz! (Teslim Edilen: %delivered%, Toplanan: %collected%)"
 # Order Owner Notifications
 order-progress: "&a%player% tarafından &f%amount% &aadet &f%material% teslim edildi, siparişiniz güncellendi."
 order-completion: "&a&l✓ %material% siparişiniz tamamlandı!"
@@ -51,6 +51,7 @@ sort-type-name: "İsme Göre"
 sort-type-price-asc: "Fiyat (Artan)"
 sort-type-price-desc: "Fiyat (Azalan)"
 sort-type-date: "Tarihe Göre"
+sort-type-custom-item: "Custom Eşyalar"
 
 # Time Format
 order-countdown-format: "%d Gün %d Saat %d Dakika %d Saniye"

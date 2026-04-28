@@ -35,6 +35,7 @@ delivery-wrong-item: "&cYou can only deliver &f%material% &cfor this order!"
 delivery-excess-items: "&7Returned &c%amount% &7excess items."
 order-not-active: "&cThis order is no longer active!"
 order-processing: "&cThis order is currently being processed! Please try again in a moment."
+order-not-collected: "&cYou cannot cancel the order without collecting the delivered items! (Delivered: %delivered%, Collected: %collected%)"
 
 # Order Owner Notifications
 order-progress: "&aYour order for &f%material% &ahas received a delivery of &f%amount% &aitems by &f%player%"
@@ -51,6 +52,7 @@ sort-type-name: "By Name"
 sort-type-price-asc: "Price (Ascending)"
 sort-type-price-desc: "Price (Descending)"
 sort-type-date: "By Date"
+sort-type-custom-item: "Custom Items"
 
 # Time Format
 order-countdown-format: "%d Days %d Hours %d Minutes %d Seconds"
