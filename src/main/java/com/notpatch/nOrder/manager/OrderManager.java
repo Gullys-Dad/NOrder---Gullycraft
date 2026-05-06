@@ -10,6 +10,7 @@ import com.notpatch.nOrder.util.PlayerUtil;
 import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.util.NLogger;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.enchantments.Enchantment;
@@ -283,12 +284,35 @@ public class OrderManager {
         }
 
         main.getEconomy().withdrawPlayer(offlinePlayer, totalPrice);
+
         getPlayerOrders(order.getPlayerId()).add(order);
         player.sendMessage(LanguageLoader.getMessage("order-created")
                 .replace("%material%", order.getMaterial().name())
                 .replace("%amount%", String.valueOf(order.getAmount()))
                 .replace("%total_price%", String.format("%.2f", totalPrice))
                 .replace("%price%", String.valueOf(order.getPrice())));
+
+        if (Settings.BROADCAST_ENABLED) {
+            if (totalPrice >= Settings.BROADCAST_MIN_TOTAL_PRICE) {
+                String playerName = player.getName();
+                if (playerName.isEmpty()) {
+                    playerName = offlinePlayer.getName();
+                    if (playerName == null) {
+                        playerName = "";
+                    }
+                }
+
+                String message = LanguageLoader.getMessage("order-broadcast")
+                        .replace("%player%", playerName)
+                        .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
+                        .replace("%amount%", String.valueOf(order.getAmount()))
+                        .replace("%price%", String.format("%.2f", order.getPrice()))
+                        .replace("%total_price%", String.format("%.2f", totalPrice));
+
+                main.getServer().broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
+            }
+        }
+
         order.setStatus(OrderStatus.ACTIVE);
         main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
         main.getOrderLogger().logOrderCreated(order, totalPrice);
