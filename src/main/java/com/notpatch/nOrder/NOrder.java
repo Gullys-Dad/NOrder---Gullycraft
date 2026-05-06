@@ -64,6 +64,9 @@ public final class NOrder extends JavaPlugin {
     @Getter
     private CustomItemManager customItemManager;
 
+    @Getter
+    private DynamicMenuManager dynamicMenuManager;
+
     @Override
     public void onEnable() {
         instance = this;
@@ -128,6 +131,8 @@ public final class NOrder extends JavaPlugin {
         customItemManager = new CustomItemManager();
 
         Settings.loadCustomItems();
+
+        dynamicMenuManager = new DynamicMenuManager(this);
 
         chatInputManager = new ChatInputManager();
         newOrderMenuManager = new NewOrderMenuManager();
