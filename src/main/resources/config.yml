@@ -47,6 +47,9 @@ settings:
   custom-item-support: true
   # Auto-save interval in minutes (saves order data to database periodically)
   auto-save-interval: 5
+  # Which menu opens when /order is run. Use "main-orders" to keep the default behaviour.
+  # To use a dynamic hub menu set this to the ID defined in menu.yml dynamic-menus section (e.g. "hub").
+  landing-menu: "main-orders"
   # Broadcast settings for new orders
   broadcast:
     enabled: true
