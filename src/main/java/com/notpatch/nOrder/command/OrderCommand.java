@@ -10,6 +10,7 @@ import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.util.PlayerUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.util.ColorUtil;
+import com.notpatch.nlib.util.NLogger;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import org.bukkit.Material;
@@ -73,9 +74,27 @@ public class OrderCommand implements BasicCommand {
             }
         }
 
-        new MainOrderMenu(player).open(player);
+        openLandingMenu(player);
         NSound.click(player);
 
+    }
+
+    private void openLandingMenu(Player player) {
+        String landing = Settings.LANDING_MENU;
+        if (landing == null || landing.isBlank() || landing.equalsIgnoreCase("main-orders")) {
+            new MainOrderMenu(player).open(player);
+            return;
+        }
+
+        if (NOrder.getInstance().getDynamicMenuManager().hasMenu(landing)) {
+            org.bukkit.configuration.ConfigurationSection cfg =
+                    NOrder.getInstance().getDynamicMenuManager().getMenuConfig(landing);
+            new com.notpatch.nOrder.gui.DynamicMenu(landing, cfg).open(player);
+        } else {
+            NLogger.warn(
+                    "landing-menu \"" + landing + "\" not found in dynamic-menus. Falling back to main-orders.");
+            new MainOrderMenu(player).open(player);
+        }
     }
 
     /**
