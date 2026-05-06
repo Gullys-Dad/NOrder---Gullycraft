@@ -6,15 +6,12 @@ import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nOrder.util.PlayerUtil;
-import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.HumanEntity;
@@ -34,6 +31,9 @@ public class NewOrderMenu extends FastInv implements Listener {
 
     private final NOrder main;
     private final Configuration config;
+    private final boolean backOnClose;
+    private final String parentMenuId;
+    private boolean closedByAction = false;
 
     @Getter
     private ItemStack selectedItem;
@@ -56,6 +56,8 @@ public class NewOrderMenu extends FastInv implements Listener {
 
         this.main = NOrder.getInstance();
         this.config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        this.backOnClose = config.getBoolean("new-order-menu.back-on-close", false);
+        this.parentMenuId = config.getString("new-order-menu.parent-menu-id", null);
         initializeMenu();
     }
 
@@ -255,6 +257,7 @@ public class NewOrderMenu extends FastInv implements Listener {
 
         switch (action) {
             case "select-item" -> {
+                closedByAction = true;
                 new ItemSelectMenu(this).open(player);
             }
             case "set-quantity" -> {
@@ -342,31 +345,15 @@ public class NewOrderMenu extends FastInv implements Listener {
 
                 NOrder.getInstance().getOrderManager().addOrder(order);
 
-                if (Settings.BROADCAST_ENABLED) {
-                    if (totalPrice >= Settings.BROADCAST_MIN_TOTAL_PRICE) {
-                        String playerName = player.getName();
-                        if (playerName.isEmpty()) {
-                            OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-                            playerName = offlinePlayer.getName();
-                            if (playerName == null) {
-                                playerName = "";
-                            }
-                        }
-
-                        String message = LanguageLoader.getMessage("order-broadcast")
-                                .replace("%player%", playerName)
-                                .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
-                                .replace("%amount%", String.valueOf(order.getAmount()))
-                                .replace("%price%", String.format("%.2f", order.getPrice()))
-                                .replace("%total_price%", String.format("%.2f", totalPrice));
-
-                        main.getServer().broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
-                    }
-                }
-
                 NOrder.getInstance().getNewOrderMenuManager().removeMenu(player);
 
+                closedByAction = true;
                 player.closeInventory();
+            }
+            default -> {
+                closedByAction = true;
+                player.closeInventory();
+                main.getDynamicMenuManager().openMenuById(player, action);
             }
         }
     }
@@ -483,6 +470,12 @@ public class NewOrderMenu extends FastInv implements Listener {
         HumanEntity entity = event.getPlayer();
         Player player = (Player) entity;
         NOrder.getInstance().getChatInputManager().cancelInput(player);
+
+        if (closedByAction) return;
+        if (!backOnClose) return;
+        if (parentMenuId == null || parentMenuId.isEmpty()) return;
+
+        main.getDynamicMenuManager().openMenuById(player, parentMenuId);
     }
 
     @Override

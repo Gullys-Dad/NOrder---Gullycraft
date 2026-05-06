@@ -25,6 +25,9 @@ public class OrderTakeMenu extends FastInv {
 
     private final NOrder main;
     private final Order order;
+    private final boolean backOnClose;
+    private final String parentMenuId;
+    private boolean closedByAction = false;
 
     public OrderTakeMenu(Order order) {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration()
@@ -33,6 +36,9 @@ public class OrderTakeMenu extends FastInv {
                         .getConfiguration().getString("order-take-menu.title")));
         this.main = NOrder.getInstance();
         this.order = order;
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        this.backOnClose = config.getBoolean("order-take-menu.back-on-close", false);
+        this.parentMenuId = config.getString("order-take-menu.parent-menu-id", null);
 
         setupMenu();
     }
@@ -50,6 +56,7 @@ public class OrderTakeMenu extends FastInv {
         if (backSection != null) {
             ItemStack backItem = ItemStackHelper.fromSection(backSection);
             setItem(backSection.getInt("slot"), backItem, e -> {
+                closedByAction = true;
                 e.getWhoClicked().closeInventory();
                 new YourOrdersMenu((Player) e.getWhoClicked()).open((Player) e.getWhoClicked());
             });
@@ -232,11 +239,22 @@ public class OrderTakeMenu extends FastInv {
         if (order.getStatus() == OrderStatus.COMPLETED && order.getCollected() >= order.getDelivered()) {
             order.setStatus(OrderStatus.ARCHIVED);
             main.getOrderLogger().logOrderArchived(order);
+            closedByAction = true;
             player.closeInventory();
             main.getOrderManager().removeOrder(order);
         }
     }
 
+
+    @Override
+    protected void onClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        super.onClose(event);
+        if (closedByAction) return;
+        if (!backOnClose) return;
+        if (parentMenuId == null || parentMenuId.isEmpty()) return;
+
+        main.getDynamicMenuManager().openMenuById((Player) event.getPlayer(), parentMenuId);
+    }
 
     @Override
     protected void onClick(InventoryClickEvent event) {

@@ -41,6 +41,9 @@ public class YourOrdersMenu extends FastInv {
     private final List<Integer> orderSlots;
     private final int itemsPerPage;
     private final Player player;
+    private final boolean backOnClose;
+    private final String parentMenuId;
+    private boolean closedByAction = false;
 
     public YourOrdersMenu(Player player) {
         this(player, 1);
@@ -53,6 +56,9 @@ public class YourOrdersMenu extends FastInv {
         this.player = player;
         main = NOrder.getInstance();
         Configuration configuration = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+
+        this.backOnClose = configuration.getBoolean("your-orders-menu.back-on-close", false);
+        this.parentMenuId = configuration.getString("your-orders-menu.parent-menu-id", null);
 
         this.currentPage = page;
         this.itemsPerPage = configuration.getInt("your-orders-menu.pagination.items-per-page", 21);
@@ -244,6 +250,7 @@ public class YourOrdersMenu extends FastInv {
         if (order.getStatus() == OrderStatus.ARCHIVED)
             return;
         event.setCancelled(true);
+        closedByAction = true;
         player.closeInventory();
         if (event.getClick() == ClickType.SHIFT_RIGHT) {
             player.sendMessage(LanguageLoader.getMessage("enter-confirm"));
@@ -277,6 +284,7 @@ public class YourOrdersMenu extends FastInv {
         if (nextButton != null) {
             if (currentPage < totalPages) {
                 setItem(53, nextButton, e -> {
+                    closedByAction = true;
                     e.getWhoClicked().closeInventory();
                     new YourOrdersMenu((Player) e.getWhoClicked(), currentPage + 1).open((Player) e.getWhoClicked());
                 });
@@ -288,6 +296,7 @@ public class YourOrdersMenu extends FastInv {
         if (prevButton != null) {
             if (currentPage > 1) {
                 setItem(45, prevButton, e -> {
+                    closedByAction = true;
                     e.getWhoClicked().closeInventory();
                     new YourOrdersMenu((Player) e.getWhoClicked(), currentPage - 1).open((Player) e.getWhoClicked());
                 });
@@ -323,24 +332,42 @@ public class YourOrdersMenu extends FastInv {
     private void handleMenuAction(String action, HumanEntity player) {
         switch (action) {
             case "back":
+                closedByAction = true;
                 player.closeInventory();
                 main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
-                    new MainOrderMenu().open((Player) player);
+                    new MainOrderMenu(this.player).open((Player) player);
                 });
                 break;
             case "next-page":
                 if (currentPage < Math.ceil((double) main.getOrderManager().getPlayerOrders(player.getName()).size() / itemsPerPage)) {
+                    closedByAction = true;
                     player.closeInventory();
                     new YourOrdersMenu((Player) player, currentPage + 1).open((Player) player);
                 }
                 break;
             case "previous-page":
                 if (currentPage > 1) {
+                    closedByAction = true;
                     player.closeInventory();
                     new YourOrdersMenu((Player) player, currentPage - 1).open((Player) player);
                 }
                 break;
+            default:
+                closedByAction = true;
+                player.closeInventory();
+                main.getDynamicMenuManager().openMenuById((Player) player, action);
+                break;
         }
+    }
+
+    @Override
+    protected void onClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        super.onClose(event);
+        if (closedByAction) return;
+        if (!backOnClose) return;
+        if (parentMenuId == null || parentMenuId.isEmpty()) return;
+
+        main.getDynamicMenuManager().openMenuById(player, parentMenuId);
     }
 
     @Override

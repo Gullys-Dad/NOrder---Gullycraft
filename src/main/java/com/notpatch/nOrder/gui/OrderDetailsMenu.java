@@ -13,6 +13,7 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.ShulkerBox;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -36,11 +37,17 @@ public class OrderDetailsMenu extends FastInv {
     private double totalEarning = 0;
 
     private boolean processed = false;
+    private final boolean backOnClose;
+    private final String parentMenuId;
+    private boolean closedByAction = false;
 
     public OrderDetailsMenu(Order order) {
         super(54, ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("order-details-menu.title")));
         main = NOrder.getInstance();
         this.order = order;
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        this.backOnClose = config.getBoolean("order-details-menu.back-on-close", false);
+        this.parentMenuId = config.getString("order-details-menu.parent-menu-id", null);
 
         main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
             for (int i = 0; i < getInventory().getSize(); i++) {
@@ -59,8 +66,13 @@ public class OrderDetailsMenu extends FastInv {
         processed = true;
 
         Player player = (Player) e.getPlayer();
-
         processDelivery(player);
+
+        if (closedByAction) return;
+        if (!backOnClose) return;
+        if (parentMenuId == null || parentMenuId.isEmpty()) return;
+
+        main.getDynamicMenuManager().openMenuById(player, parentMenuId);
     }
 
     private void processDelivery(Player player) {

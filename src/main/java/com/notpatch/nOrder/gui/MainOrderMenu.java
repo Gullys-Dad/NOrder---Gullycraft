@@ -41,6 +41,9 @@ public class MainOrderMenu extends FastInv {
     private List<Order> filteredOrders;
     private Player player;
     private final OrderSortType sortType;
+    private final boolean backOnClose;
+    private final String parentMenuId;
+    private boolean closedByAction = false;
 
     public MainOrderMenu() {
         this(1, NOrder.getInstance().getOrderManager().getAllOrders(), null, null, null, OrderSortType.HIGHLIGHTED);
@@ -72,6 +75,9 @@ public class MainOrderMenu extends FastInv {
         this.currentPage = page;
         this.sortType = sortType;
         this.itemsPerPage = configuration.getInt("main-order-menu.pagination.items-per-page", 21);
+        this.backOnClose = configuration.getBoolean("main-order-menu.back-on-close", false);
+        this.parentMenuId = configuration.getString("main-order-menu.parent-menu-id", null);
+        this.player = player;
 
         if (filterType != null && filterValue != null) {
             this.filteredOrders = filterOrders(orders, filterType, filterValue);
@@ -362,6 +368,7 @@ public class MainOrderMenu extends FastInv {
 
 
     private void handleOrderClick(Order order, HumanEntity player) {
+        closedByAction = true;
         player.closeInventory();
         if (order.getPlayerId() == player.getUniqueId() || order.getPlayerName().equalsIgnoreCase(player.getName())) {
             main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
@@ -406,12 +413,14 @@ public class MainOrderMenu extends FastInv {
     private void handleMenuAction(String action, HumanEntity player) {
         switch (action) {
             case "new-order" -> {
+                closedByAction = true;
                 player.closeInventory();
                 main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
                     main.getNewOrderMenuManager().getOrCreateMenu((Player) player).open((Player) player);
                 });
             }
             case "search-order" -> {
+                closedByAction = true;
                 player.closeInventory();
                 player.sendMessage(LanguageLoader.getMessage("enter-item"));
                 main.getChatInputManager().setAwaitingInput((Player) player, searchValue -> {
@@ -422,6 +431,7 @@ public class MainOrderMenu extends FastInv {
                 });
             }
             case "your-orders" -> {
+                closedByAction = true;
                 player.closeInventory();
                 main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
                     new YourOrdersMenu((Player) player).open((Player) player);
@@ -429,6 +439,7 @@ public class MainOrderMenu extends FastInv {
             }
             case "next-page" -> {
                 if (currentPage < Math.ceil((double) filteredOrders.size() / itemsPerPage)) {
+                    closedByAction = true;
                     player.closeInventory();
                     main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
                         new MainOrderMenu(currentPage + 1, filteredOrders, null, null, (Player) player, sortType).open((Player) player);
@@ -437,6 +448,7 @@ public class MainOrderMenu extends FastInv {
             }
             case "previous-page" -> {
                 if (currentPage > 1) {
+                    closedByAction = true;
                     player.closeInventory();
                     main.getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
                         new MainOrderMenu(currentPage - 1, filteredOrders, null, null, (Player) player, sortType).open((Player) player);
@@ -444,6 +456,7 @@ public class MainOrderMenu extends FastInv {
                 }
             }
             case "sort-orders" -> {
+                closedByAction = true;
                 player.closeInventory();
                 OrderSortType nextSort = sortType.next();
                 List<Order> baseOrders = main.getOrderManager().getAllOrders();
@@ -451,7 +464,22 @@ public class MainOrderMenu extends FastInv {
                     new MainOrderMenu(1, baseOrders, null, null, (Player) player, nextSort).open((Player) player);
                 });
             }
+            default -> {
+                closedByAction = true;
+                player.closeInventory();
+                main.getDynamicMenuManager().openMenuById((Player) player, action);
+            }
         }
+    }
+
+    @Override
+    protected void onClose(org.bukkit.event.inventory.InventoryCloseEvent event) {
+        super.onClose(event);
+        if (closedByAction) return;
+        if (!backOnClose) return;
+        if (parentMenuId == null || parentMenuId.isEmpty()) return;
+
+        main.getDynamicMenuManager().openMenuById(player, parentMenuId);
     }
 
     @Override
