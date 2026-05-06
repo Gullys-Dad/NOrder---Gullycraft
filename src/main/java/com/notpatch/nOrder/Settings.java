@@ -56,6 +56,13 @@ public class Settings {
     public static int AUTO_SAVE_INTERVAL_MINUTES;
 
     public static boolean CUSTOM_ITEM_ENABLED;
+
+    /**
+     * The menu opened when /order is executed.
+     * "main-orders" = default MainOrderMenu behaviour (no change for existing setups).
+     * Any other value = a dynamic menu ID from the dynamic-menus section of menu.yml.
+     */
+    public static String LANDING_MENU;
     public static List<ItemStack> customItems = new ArrayList<>();
     public static Map<String, ItemStack> customItemsCache = new HashMap<>();
 
@@ -116,6 +123,8 @@ public class Settings {
         AUTO_SAVE_INTERVAL_MINUTES = config.getInt("settings.auto-save-interval", 5);
 
         CUSTOM_ITEM_ENABLED = config.getBoolean("settings.custom-item-support", true);
+
+        LANDING_MENU = config.getString("settings.landing-menu", "main-orders");
 
         NOrder.getInstance().getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             List<Material> items = Arrays.stream(Material.values())
