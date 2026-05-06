@@ -1,5 +1,5 @@
 {
-  "version": "1.3.8",
-  "message": "\n- Added filter for custom items. \n - Fixed some minor bugs.",
+  "version": "1.3.9",
+  "message": "\n- Added options for customizing the appearance of the UI.\n- Added back on close option for menus \n- Improved performance and fixed minor bugs.",
   "critical": false
 }
