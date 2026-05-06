@@ -1,6 +1,8 @@
 main-order-menu:
   title: "&lOrder Menu"
   size: 54
+  back-on-close: false
+  parent-menu-id: "none"
   items:
     filler:
       slots: [ 0-8,9,17,18,26,27,35,36,44 ]
@@ -92,6 +94,8 @@ main-order-menu:
 new-order-menu:
   title: "&lCreate New Order"
   size: 27
+  back-on-close: true
+  parent-menu-id: "main-orders"
   items:
     select-item:
       slot: 12
@@ -153,6 +157,8 @@ new-order-menu:
 your-orders-menu:
   title: "&lYour Orders"
   size: 54
+  back-on-close: true
+  parent-menu-id: "main-orders"
   items:
     filler:
       slots: [ 0-8,9,17,18,26,27,35,36,44 ]
@@ -216,6 +222,8 @@ your-orders-menu:
 order-take-menu:
   title: "&lTake Delivered Items"
   size: 54
+  back-on-close: true
+  parent-menu-id: "your-orders"
   items:
     filler:
       slots: [ 0-8,9,17,18,26,27,35,36,44,45,47,51,53 ]
@@ -355,3 +363,60 @@ enchant-select-menu:
 
 order-details-menu:
   title: "&lPlace Order Items"
+  back-on-close: true
+  parent-menu-id: "main-orders"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# DYNAMIC MENUS
+# Define as many custom menus as you like here.
+# To make /order open one of these instead of the default order list, set:
+#   settings.landing-menu: <menu-id>   in config.yml
+# Leave landing-menu as "main-orders" to keep the default behaviour unchanged.
+# ──────────────────────────────────────────────────────────────────────────────
+dynamic-menus:
+  # Example hub menu — set landing-menu: "hub" in config.yml to enable it.
+  hub:
+    title: "&lOrder Hub"
+    size: 27
+    # If true, closing this menu without clicking a button opens parent-menu-id.
+    back-on-close: false
+    # parent-menu-id: "some-other-menu"
+    items:
+      filler:
+        slots: "0-8,18-26"
+        material: BLACK_STAINED_GLASS_PANE
+        name: " "
+      my-orders:
+        slot: 11
+        material: CHEST
+        name: "&e&lSiparişlerim"
+        lore:
+          - ""
+          - "&7Kendi siparişlerini görüntüle."
+          - ""
+          - "&eClick to open"
+          - ""
+        # action: your-orders
+        action: "your-orders"
+      create-order:
+        slot: 13
+        material: MAP
+        name: "&a&lSipariş Oluştur"
+        lore:
+          - ""
+          - "&7Yeni bir sipariş oluştur."
+          - ""
+          - "&eClick to open"
+          - ""
+        action: "new-order"
+      all-orders:
+        slot: 15
+        material: COMPASS
+        name: "&b&lSiparişler"
+        lore:
+          - ""
+          - "&7Tüm siparişleri görüntüle."
+          - ""
+          - "&eClick to open"
+          - ""
+        action: "main-orders"
