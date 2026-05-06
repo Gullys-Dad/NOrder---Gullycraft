@@ -235,6 +235,9 @@ public class OrderAdminCommand implements BasicCommand {
         Settings.loadCustomItems();
         main.getConfigurationManager().reloadConfigurations();
         main.getWebhookManager().loadWebhooks();
+        if (main.getDynamicMenuManager() != null) {
+            main.getDynamicMenuManager().loadMenus();
+        }
         sender.sendMessage("§aConfigurations reloaded.");
     }
 
